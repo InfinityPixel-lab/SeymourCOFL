@@ -377,7 +377,7 @@ async function extractBuyer(details) {
 /**
  * SAVE TO BACKEND
  */
-async function savePurchase(data) {
+async function savePurchase(data, retries = 3) {
 
     try {
 
@@ -393,6 +393,13 @@ async function savePurchase(data) {
         return response.data;
 
     } catch (err) {
+
+        // Retry on connection refused (server not ready yet)
+        if (err.code === 'ECONNREFUSED' && retries > 0) {
+            console.log(`   ⏳ Backend not ready, retrying in 2s... (${retries} left)`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            return savePurchase(data, retries - 1);
+        }
 
         // Handle duplicate at backend level
         if (err.response?.status === 409) {
@@ -746,7 +753,11 @@ process.on('SIGINT', () => {
  */
 (async () => {
 
-    // Run first poll immediately
+    // Wait for server to be ready (especially on fly.io with shared VM)
+    console.log('⏳ Waiting 3s for backend server to start...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
+    // Run first poll
     await pollCoflNet();
 
     // Then run on interval
