@@ -7,6 +7,9 @@ app = 'seymourcofl'
 primary_region = 'ams'
 
 [build]
+[processes]
+web = "node server.js"
+poller = "node poller.js"
 
 [[mounts]]
   source = 'data'
