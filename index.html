@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoflNet Purchase Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: #e0e6ff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid #22c55e;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: #22c55e;
+            margin-top: 1rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease 0.2s both;
+        }
+
+        button {
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(96, 165, 250, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(96, 165, 250, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease 0.3s both;
+        }
+
+        .stat-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #60a5fa;
+        }
+
+        .tier-stats-section {
+            margin-bottom: 2rem;
+        }
+
+        .tier-stats-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .tier-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tier-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .tier-card.t1 { border-color: rgba(34, 197, 94, 0.5); }
+        .tier-card.t2 { border-color: rgba(234, 179, 8, 0.5); }
+        .tier-card.t3 { border-color: rgba(239, 68, 68, 0.5); }
+        .tier-card.fadet1 { border-color: rgba(34, 197, 94, 0.3); background: rgba(34, 197, 94, 0.05); }
+        .tier-card.fadet2 { border-color: rgba(234, 179, 8, 0.3); background: rgba(234, 179, 8, 0.05); }
+
+        .tier-label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .tier-count {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .tier-count.t1 { color: #22c55e; }
+        .tier-count.t2 { color: #eab308; }
+        .tier-count.t3 { color: #ef4444; }
+        .tier-count.fadet1 { color: #86efac; }
+        .tier-count.fadet2 { color: #fde047; }
+
+        .item-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .item-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            animation: fadeInUp 0.6s ease;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .item-card:hover {
+            border-color: rgba(96, 165, 250, 0.5);
+            background: rgba(30, 41, 59, 0.8);
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(96, 165, 250, 0.2);
+        }
+
+        .item-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .item-card:hover::before {
+            left: 100%;
+        }
+
+        .item-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #60a5fa;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .hex-color-box {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: 2px solid rgba(96, 165, 250, 0.5);
+            margin-right: 0.5rem;
+        }
+
+        .data-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 3px solid transparent;
+        }
+
+        .stat.hex {
+            border-left-color: #a78bfa;
+        }
+
+        .stat.price {
+            border-left-color: #22c55e;
+        }
+
+        .stat.count {
+            border-left-color: #f59e0b;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            color: #e0e6ff;
+        }
+
+        .price-value {
+            color: #22c55e;
+            font-size: 1.3rem;
+        }
+
+        .count-value {
+            color: #f59e0b;
+        }
+
+        .last-update {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .purchases-table {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 12px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            overflow-x: auto;
+            animation: fadeInUp 0.6s ease 0.4s both;
+        }
+
+        .purchases-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #60a5fa;
+            margin-bottom: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #94a3b8;
+            border-bottom: 2px solid rgba(96, 165, 250, 0.3);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+            color: #e0e6ff;
+        }
+
+        tr:hover {
+            background: rgba(96, 165, 250, 0.1);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #94a3b8;
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .error-alert {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid #ef4444;
+            color: #fca5a5;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .success-alert {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid #22c55e;
+            color: #86efac;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        input[type="number"] {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            color: #e0e6ff;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            width: 80px;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #60a5fa;
+            background: rgba(96, 165, 250, 0.1);
+        }
+
+        input[type="text"] {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            color: #e0e6ff;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 200px;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #60a5fa;
+            background: rgba(96, 165, 250, 0.1);
+        }
+
+        select {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            color: #e0e6ff;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #60a5fa;
+        }
+
+        .search-section {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .search-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #60a5fa;
+            margin-bottom: 1rem;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .hex-code-text {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: #a78bfa;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #60a5fa;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                opacity: 0.3;
+                transform: scale(0.8);
+            }
+            40% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚡ CoflNet Purchase Monitor</h1>
+            <p style="color: #94a3b8; margin-top: 0.5rem;">Real-time auction tracking with persistent storage</p>
+            <div class="status-badge">
+                <span class="status-dot"></span>
+                <span id="status-text">Connected to backend</span>
+            </div>
+        </header>
+
+        <div class="controls">
+            <button onclick="loadAllData()">📊 Refresh Data</button>
+            <button onclick="downloadCSV()">📥 Download CSV</button>
+            <button onclick="clearAllData()">🗑️ Clear All Data</button>
+        </div>
+
+        <div class="search-section">
+            <div class="search-title">🔍 Search</div>
+            <div class="search-row">
+                <input type="text" id="hexSearch" placeholder="Hex code (e.g., #FF0000)" maxlength="7">
+                <button onclick="searchByHex()">Search Color</button>
+                <span style="color: #64748b;">|</span>
+                <input type="text" id="userSearch" placeholder="Username">
+                <select id="roleSearch">
+                    <option value="both">Buyer/Seller</option>
+                    <option value="buyer">Buyer only</option>
+                    <option value="seller">Seller only</option>
+                </select>
+                <button onclick="searchByUser()">Search User</button>
+                <span style="color: #64748b;">|</span>
+                <button onclick="resetSearch()">Show All</button>
+                <span style="color: #64748b;">|</span>
+                <button id="viewToggleBtn" onclick="toggleViewMode()" style="background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);">📋 View: Latest 50</button>
+            </div>
+        </div>
+
+        <div id="alerts"></div>
+
+        <div class="tier-stats-section">
+            <div class="tier-stats-label">Today</div>
+            <div class="tier-stats-grid" id="tierStatsToday"></div>
+            <div class="tier-stats-label">Total</div>
+            <div class="tier-stats-grid" id="tierStatsTotal"></div>
+        </div>
+
+        <div class="stats-grid" id="summaryStats">
+            <!-- Summary stats will be loaded here -->
+        </div>
+
+        <div class="item-grid" id="itemsContainer">
+            <!-- Item cards will be generated here -->
+        </div>
+
+        <div class="purchases-table">
+            <div class="purchases-title">Latest Purchases (Last 50)</div>
+            <div id="purchasesContainer">
+                <div class="empty-state">
+                    <p>Loading data from server...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // IMPORTANT: Items with their FIXED hex codes (each piece has unique color)
+        const ITEMS = {
+            'Cashmere Jacket': null,      // Will be fetched from API/data
+            'Satin Trousers': null,
+            'Velvet Top Hat': null,
+            'Oxford Shoes': null
+        };
+
+        const API_URL = 'http://localhost:3000/api';
+        let itemStats = {};
+        let allPurchases = [];
+        let viewMode = 'latest'; // 'latest' or 'all'
+
+        // Format price with k/m suffixes (1000 -> 1k, 1000000 -> 1m)
+        function formatPrice(price) {
+            if (price === undefined || price === null) return '0';
+            if (price >= 1000000) {
+                return (price / 1000000).toFixed(2).replace(/\.00$/, '') + 'm';
+            }
+            if (price >= 1000) {
+                return (price / 1000).toFixed(2).replace(/\.00$/, '') + 'k';
+            }
+            return price.toString();
+        }
+
+        // Load all data on page load
+        window.addEventListener('load', () => {
+            loadAllData();
+        });
+
+        // Toggle between latest 50 and all purchases
+        function toggleViewMode() {
+            viewMode = viewMode === 'latest' ? 'all' : 'latest';
+            const btn = document.getElementById('viewToggleBtn');
+            const title = document.querySelector('.purchases-title');
+
+            if (viewMode === 'all') {
+                btn.textContent = '📋 View: All Purchases';
+                if (title) title.textContent = 'All Purchases';
+            } else {
+                btn.textContent = '📋 View: Latest 50';
+                if (title) title.textContent = 'Latest Purchases (Last 50)';
+            }
+
+            loadAllData();
+        }
+
+        // Search by hex code
+        async function searchByHex() {
+            const hex = document.getElementById('hexSearch').value.trim();
+            if (!hex) {
+                showAlert('Please enter a hex code', 'error');
+                return;
+            }
+
+            const limit = viewMode === 'all' ? 10000 : 50;
+            try {
+                const response = await fetch(`${API_URL}/purchases/search/hex?hex=${encodeURIComponent(hex)}&limit=${limit}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    allPurchases = data.purchases;
+                    updateUI();
+                    showAlert(`Found ${data.count} results for hex ${data.hex}`, 'success');
+                } else {
+                    showAlert('Search failed', 'error');
+                }
+            } catch (error) {
+                showAlert('Error searching: ' + error.message, 'error');
+            }
+        }
+
+        // Search by username
+        async function searchByUser() {
+            const username = document.getElementById('userSearch').value.trim();
+            if (!username) {
+                showAlert('Please enter a username', 'error');
+                return;
+            }
+
+            const role = document.getElementById('roleSearch').value;
+            const limit = viewMode === 'all' ? 10000 : 50;
+
+            try {
+                const response = await fetch(`${API_URL}/purchases/search/user?username=${encodeURIComponent(username)}&role=${role}&limit=${limit}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    allPurchases = data.purchases;
+                    updateUI();
+                    showAlert(`Found ${data.count} results for ${username}`, 'success');
+                } else {
+                    showAlert('Search failed', 'error');
+                }
+            } catch (error) {
+                showAlert('Error searching: ' + error.message, 'error');
+            }
+        }
+
+        // Reset search to show all
+        async function resetSearch() {
+            document.getElementById('hexSearch').value = '';
+            document.getElementById('userSearch').value = '';
+            await loadAllData();
+        }
+
+        // Load tier statistics (both daily and total)
+        async function loadTierStats() {
+            try {
+                const [dailyRes, totalRes] = await Promise.all([
+                    fetch(`${API_URL}/stats/tiers/daily`),
+                    fetch(`${API_URL}/stats/tiers/total`)
+                ]);
+
+                if (dailyRes.ok) {
+                    const dailyData = await dailyRes.json();
+                    displayTierStats(dailyData, 'tierStatsToday', 'Today');
+                }
+
+                if (totalRes.ok) {
+                    const totalData = await totalRes.json();
+                    displayTierStats(totalData, 'tierStatsTotal', 'Total');
+                }
+            } catch (error) {
+                console.error('Error loading tier stats:', error);
+            }
+        }
+
+        // Display tier statistics
+        function displayTierStats(data, containerId, labelPrefix) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `
+                <div class="tier-card t1">
+                    <div class="tier-label">T1</div>
+                    <div class="tier-count t1">${data.T1}</div>
+                </div>
+                <div class="tier-card t2">
+                    <div class="tier-label">T2</div>
+                    <div class="tier-count t2">${data.T2}</div>
+                </div>
+                <div class="tier-card t3">
+                    <div class="tier-label">T3</div>
+                    <div class="tier-count t3">${data.T3}</div>
+                </div>
+                <div class="tier-card fadet1">
+                    <div class="tier-label">Fade T1</div>
+                    <div class="tier-count fadet1">${data.fadeT1}</div>
+                </div>
+                <div class="tier-card fadet2">
+                    <div class="tier-label">Fade T2</div>
+                    <div class="tier-count fadet2">${data.fadeT2}</div>
+                </div>
+            `;
+        }
+
+        // Load data from backend
+        async function loadAllData() {
+            try {
+                // Load daily tier stats
+                await loadTierStats();
+
+                // Load purchases based on view mode
+                const limit = viewMode === 'all' ? 10000 : 50;
+                const purchasesRes = await fetch(`${API_URL}/purchases?limit=${limit}`);
+                if (purchasesRes.ok) {
+                    const data = await purchasesRes.json();
+                    allPurchases = data.purchases;
+
+                    // Extract unique hex codes for items
+                    data.purchases.forEach(p => {
+                        if (ITEMS[p.itemName] === null) {
+                            ITEMS[p.itemName] = p.hexCode;
+                        }
+                    });
+                }
+
+                // Load stats
+                const statsRes = await fetch(`${API_URL}/stats`);
+                if (statsRes.ok) {
+                    itemStats = await statsRes.json();
+                    
+                    // Update ITEMS with hex codes from stats
+                    Object.keys(itemStats).forEach(item => {
+                        ITEMS[item] = itemStats[item].hexCode;
+                    });
+                }
+
+                // Load summary
+                const summaryRes = await fetch(`${API_URL}/summary`);
+                if (summaryRes.ok) {
+                    const summary = await summaryRes.json();
+                    displaySummary(summary);
+                }
+
+                updateUI();
+                showAlert('Data loaded successfully', 'success');
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showAlert('Error: Could not connect to backend. Make sure the server is running.', 'error');
+            }
+        }
+
+        // Display summary statistics
+        function displaySummary(summary) {
+            const container = document.getElementById('summaryStats');
+            container.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">Total Purchases</div>
+                    <div class="stat-value">${summary.totalRecords}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Unique Items</div>
+                    <div class="stat-value">${summary.uniqueItems}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Average Price</div>
+                    <div class="stat-value" style="color: #22c55e;">${formatPrice(summary.avgPrice)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Min Price</div>
+                    <div class="stat-value">${formatPrice(summary.minPrice)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Max Price</div>
+                    <div class="stat-value">${formatPrice(summary.maxPrice)}</div>
+                </div>
+            `;
+        }
+
+        // Update the UI with auction cards (each showing individual hex code)
+        function updateUI() {
+            const container = document.getElementById('itemsContainer');
+            container.innerHTML = '';
+
+            if (allPurchases.length === 0) {
+                container.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;"><p>No auctions recorded yet.</p></div>';
+                return;
+            }
+
+            // Display each auction as a separate box (limit based on view mode)
+            const displayLimit = viewMode === 'all' ? allPurchases.length : 50;
+            allPurchases.slice(0, displayLimit).forEach((purchase) => {
+                const card = document.createElement('div');
+                card.className = 'item-card';
+                card.innerHTML = `<div class="item-name">
+                    <div class="hex-color-box" style="background: ${purchase.hexCode};"></div>
+                    ${purchase.itemName}
+                </div>
+                <div class="data-row">
+                    <div class="stat hex">
+                        <div class="stat-label">Hex Code</div>
+                        <div class="stat-value hex-code-text">${purchase.hexCode}</div>
+                    </div>
+                    <div class="stat price">
+                        <div class="stat-label">Price</div>
+                        <div class="stat-value price-value">${formatPrice(purchase.price)}</div>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div class="stat count">
+                        <div class="stat-label">Seller</div>
+                        <div class="stat-value count-value" style="font-size: 1rem;">${purchase.playerName || 'N/A'}</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Buyer</div>
+                        <div class="stat-value" style="font-size: 1rem;">${purchase.buyer || 'Unknown'}</div>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div class="stat count">
+                        <div class="stat-label">Tier</div>
+                        <div class="stat-value count-value">${purchase.tier || 'UNKNOWN'}</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Closest To</div>
+                        <div class="stat-value" style="font-size: 0.9rem; color: #a78bfa;">${purchase.closestColor || 'Unknown'}</div>
+                    </div>
+                </div>
+                <div class="last-update">Recorded: ${new Date(purchase.timestamp).toLocaleTimeString()}</div>`;
+                container.appendChild(card);
+            });
+
+            updatePurchasesTable();
+        }
+
+        // Update purchases table
+        function updatePurchasesTable() {
+            const container = document.getElementById('purchasesContainer');
+            
+            if (allPurchases.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No purchases recorded yet.</p></div>';
+                return;
+            }
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Hex Code</th>
+                            <th>Price</th>
+                            <th>Buyer</th>
+                            <th>Tier</th>
+                            <th>Closest To</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            allPurchases.forEach(purchase => {
+                html += `<tr>
+                    <td>${purchase.itemName}</td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div style="width: 20px; height: 20px; background: ${purchase.hexCode}; border-radius: 4px; border: 1px solid rgba(96, 165, 250, 0.5);"></div>
+                            <code>${purchase.hexCode}</code>
+                        </div>
+                    </td>
+                    <td>${formatPrice(purchase.price)}</td>
+                    <td>${purchase.buyer || 'Unknown'}</td>
+                    <td>${purchase.tier || 'UNKNOWN'}</td>
+                    <td style="font-size: 0.85rem; color: #a78bfa;">${purchase.closestColor || 'Unknown'}</td>
+                    <td>${new Date(purchase.timestamp).toLocaleString()}</td>
+                </tr>`;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Show alert
+        function showAlert(message, type) {
+            const alertsContainer = document.getElementById('alerts');
+            const alert = document.createElement('div');
+            alert.className = type === 'success' ? 'success-alert' : 'error-alert';
+            alert.textContent = message;
+            alertsContainer.appendChild(alert);
+            
+            setTimeout(() => alert.remove(), 3000);
+        }
+
+        // Download CSV
+        async function downloadCSV() {
+            try {
+                const response = await fetch(`${API_URL}/export/csv`);
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `coflnet-purchases-${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                showAlert('CSV downloaded successfully', 'success');
+            } catch (error) {
+                showAlert('Error downloading CSV: ' + error.message, 'error');
+            }
+        }
+
+        // Clear all data (with confirmation)
+        function clearAllData() {
+            if (!confirm('Are you sure? This will delete ALL recorded purchases from the database.')) {
+                return;
+            }
+
+            if (!confirm('This action cannot be undone. Are you REALLY sure?')) {
+                return;
+            }
+
+            showAlert('This feature requires backend modification. Contact admin.', 'error');
+        }
+    </script>
+</body>
+</html>
