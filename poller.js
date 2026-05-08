@@ -173,8 +173,7 @@ const CONFIG = {
     },
 
     BACKEND_URL:
-        process.env.BACKEND_URL ||
-        'http://localhost:3000/api',
+        process.env.BACKEND_URL || 'http://localhost:3000/api',
 
     POLL_INTERVAL:
         parseInt(process.env.POLL_INTERVAL) || 20000,
